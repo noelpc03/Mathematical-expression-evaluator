@@ -8,9 +8,13 @@ import Text.Parsec (parse)
 processInput :: String -> IO ()
 processInput input
     | input == "S" = putStrLn "Saliendo..."
-    | otherwise = case parse parseExpr "" input of
+    | otherwise = case parse parseExpr "" (filter(/=' ')input) of
         Left err -> print err
-        Right expr -> print $ eval expr
+        Right expr -> do
+            putStrLn "Árbol de la expresión:"
+            print expr  -- Muestra la estructura del árbol de la expresión
+            putStrLn "Resultado de la evaluación:"
+            print $ eval expr  -- Muestra el resultado de evaluar la expresión
 
 -- Función principal
 main :: IO ()
