@@ -1,7 +1,13 @@
 module Parser (Expr(..), parseExpr) where
 
-import Text.Parsec
+-- Importaciones calificadas
+import qualified Text.Parsec as Parsec
+import qualified Control.Exception as Exception
+
+-- Otras importaciones
 import Text.Parsec.String (Parser)
+import Text.Parsec (char, string, spaces, many1, digit, letter, choice, (<|>), chainl1)
+import Control.Exception (SomeException, evaluate, try)
 
 -- Definimos un tipo de datos para representar expresiones aritméticas
 data Expr = Val Double
@@ -47,9 +53,9 @@ parens = do
 -- Parser para funciones trigonométricas
 trigFunc :: Parser Expr
 trigFunc = do
-    func <- choice [try (string "sin"), try (string "cos"), try (string "tan"),
-                    try (string "cot"), try (string "asin"), try (string "acos"),
-                    try (string "atan"), try (string "acot")]
+    func <- choice [Parsec.try (string "sin"), Parsec.try (string "cos"), Parsec.try (string "tan"),
+                    Parsec.try (string "cot"), Parsec.try (string "asin"), Parsec.try (string "acos"),
+                    Parsec.try (string "atan"), Parsec.try (string "acot")]
     spaces
     expr <- parens <|> factor
     return $ case func of
@@ -98,7 +104,7 @@ integrateExpr = do
 
 -- Parser para factores (números, variables, paréntesis, raíz cuadrada, funciones trigonométricas, derivadas, integrales)
 factor :: Parser Expr
-factor = try derivExpr <|> try integrateExpr <|> try trigFunc <|> try sqrtExpr <|> try number <|> try variable <|> parens
+factor = Parsec.try derivExpr <|> Parsec.try integrateExpr <|> Parsec.try trigFunc <|> Parsec.try sqrtExpr <|> Parsec.try number <|> Parsec.try variable <|> parens
 
 -- Parser para potencias
 power :: Parser Expr

@@ -2,7 +2,7 @@ module GUI where
 
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
-import Evaluator (eval)
+import Evaluator (safeEval)
 import Parser (parseExpr)
 import Text.Parsec (parse)
 import Data.List (isInfixOf)
@@ -69,9 +69,12 @@ setup window = do
     -- Manejar el evento de click en el botón para evaluar la expresión
     on UI.click button $ \_ -> do
         expr <- get value input
-        let resultado = case parse parseExpr "" expr of
-                          Left _ -> "Error de sintaxis"
-                          Right e -> "Resultado: " ++ show (eval e)
+        result <- liftIO $ case parse parseExpr "" expr of
+                             Left err -> return $ Left ("Error de sintaxis: " ++ show err)
+                             Right e  -> safeEval e
+        let resultado = case result of
+                          Left errMsg -> "Error: " ++ errMsg
+                          Right val   -> "Resultado: " ++ show val
         element output # set text resultado
         element errorMsg # set text (if "Error" `isInfixOf` resultado then resultado else "")
     
