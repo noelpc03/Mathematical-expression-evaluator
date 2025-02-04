@@ -11,24 +11,24 @@ import Control.Exception (SomeException, evaluate, try)
 
 -- Definimos un tipo de datos para representar expresiones aritméticas
 data Expr = Val Double
-          | Var String
-          | Add Expr Expr
-          | Sub Expr Expr
-          | Mul Expr Expr
-          | Div Expr Expr
-          | Sqrt Expr
-          | Pow Expr Expr
-          | Sin Expr
-          | Cos Expr
-          | Tan Expr
-          | Cot Expr
-          | ASin Expr
-          | ACos Expr
-          | ATan Expr
-          | ACot Expr
-          | Deriv Expr String
-          | Integrate Expr String
-          deriving Show
+            | Var String
+            | Add Expr Expr
+            | Sub Expr Expr
+            | Mul Expr Expr
+            | Div Expr Expr
+            | Sqrt Expr
+            | Pow Expr Expr
+            | Sin Expr
+            | Cos Expr
+            | Tan Expr
+            | Cot Expr
+            | ASin Expr
+            | ACos Expr
+            | ATan Expr
+            | ACot Expr
+            | Deriv Expr String
+            | Integrate Expr String
+            deriving Show
 
 -- Parser para números
 number :: Parser Expr

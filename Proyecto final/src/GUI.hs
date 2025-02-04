@@ -17,21 +17,21 @@ setup window = do
     
     -- Contenedor principal para centrar todo en la ventana (usando Flexbox)
     container <- UI.div # set style [("height", "100vh"),
-                                     ("display", "flex"),
-                                     ("justify-content", "center"),
-                                     ("align-items", "center"),
-                                     ("background-color", "#f8f9fa")]
+                                    ("display", "flex"),
+                                    ("justify-content", "center"),
+                                    ("align-items", "center"),
+                                    ("background-color", "#f8f9fa")]
     
     -- Recuadro central (estilo card)
     box <- UI.div # set style [ ("width", "500px")
-                              , ("padding", "40px 20px 60px 20px")
-                              , ("border", "1px solid #ccc")
-                              , ("border-radius", "5px")
-                              , ("box-shadow", "0 0 10px rgba(0,0,0,0.1)")
-                              , ("background-color", "#fff")
-                              , ("position", "relative")
-                              , ("text-align", "center")
-                              ]
+                                , ("padding", "40px 20px 60px 20px")
+                                , ("border", "1px solid #ccc")
+                                , ("border-radius", "5px")
+                                , ("box-shadow", "0 0 10px rgba(0,0,0,0.1)")
+                                , ("background-color", "#fff")
+                                , ("position", "relative")
+                                , ("text-align", "center")
+                                ]
     
     -- Título grande
     header <- UI.h1 # set text "Evaluador Matemático"
@@ -53,12 +53,12 @@ setup window = do
     
     -- Agregar los elementos al recuadro
     void $ element box #+ [ element header
-                          , element subheader
-                          , element input
-                          , element output
-                          , element errorMsg
-                          , element button
-                          ]
+                            , element subheader
+                            , element input
+                            , element output
+                            , element errorMsg
+                            , element button
+                            ]
     
     -- Agregar el recuadro al contenedor principal
     void $ element container #+ [ element box ]
@@ -70,11 +70,11 @@ setup window = do
     on UI.click button $ \_ -> do
         expr <- get value input
         result <- liftIO $ case parse parseExpr "" expr of
-                             Left err -> return $ Left ("Error de sintaxis: " ++ show err)
-                             Right e  -> safeEval e
+                            Left err -> return $ Left ("Error de sintaxis: " ++ show err)
+                            Right e  -> safeEval e
         let resultado = case result of
-                          Left errMsg -> "Error: " ++ errMsg
-                          Right val   -> "Resultado: " ++ show val
+                        Left errMsg -> "Error: " ++ errMsg
+                        Right val   -> "Resultado: " ++ show val
         element output # set text resultado
         element errorMsg # set text (if "Error" `isInfixOf` resultado then resultado else "")
     
