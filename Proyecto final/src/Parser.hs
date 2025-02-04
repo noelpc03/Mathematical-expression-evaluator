@@ -6,7 +6,7 @@ import qualified Control.Exception as Exception
 
 -- Otras importaciones
 import Text.Parsec.String (Parser)
-import Text.Parsec (char, string, spaces, many1, digit, letter, choice, (<|>), chainl1)
+import Text.Parsec (char, string, spaces, many1, optionMaybe, digit, letter, choice, (<|>), chainl1)
 import Control.Exception (SomeException, evaluate, try)
 
 -- Definimos un tipo de datos para representar expresiones aritméticas
@@ -27,6 +27,7 @@ data Expr = Val Double
             | ATan Expr
             | ACot Expr
             | Deriv Expr String
+            | DerivEval Expr String Double
             | Integrate Expr String
             deriving Show
 
@@ -86,8 +87,16 @@ derivExpr = do
     char ','
     spaces
     var <- many1 letter
+    -- Intenta parsear un tercer parámetro opcional
+    maybePoint <- optionMaybe (do
+        char ','
+        spaces
+        point <- many1 (digit <|> char '.')
+        return (read point))
     char ')'
-    return $ Deriv expr var
+    return $ case maybePoint of
+        Nothing -> Deriv expr var
+        Just point -> DerivEval expr var point
 
 -- Parser para integrales
 integrateExpr :: Parser Expr
