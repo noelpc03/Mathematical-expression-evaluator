@@ -18,7 +18,6 @@ createButton label = UI.button
                  ("border", "none"), ("box-shadow", "1px 1px 3px rgba(0,0,0,0.2)"),
                  ("cursor", "pointer")]
 
--- Crear un botón de cambio de sistema
 createSwitchButton :: String -> UI Element
 createSwitchButton label = UI.button
     # set text label
@@ -27,17 +26,15 @@ createSwitchButton label = UI.button
                  ("background-color", "#28A745"), ("color", "white"),
                  ("border", "none"), ("cursor", "pointer")]
 
--- Función para restringir la entrada del teclado en Binario y Hexadecimal
+-- Bloquear la entrada del teclado excepto "x" en decimal
 restrictInput :: Element -> Maybe String -> UI ()
 restrictInput input (Just allowedChars) = do
     on UI.keyup input $ \_ -> do
         text <- get value input
         let filteredText = filter (`elem` allowedChars) text
-        when (text /= filteredText) $
-            void $ element input # set value filteredText
-restrictInput _ Nothing = return ()  -- No aplicar restricciones en Decimal
+        when (text /= filteredText) $ void $ element input # set value filteredText
+restrictInput _ Nothing = return ()
 
--- Función para actualizar el cuadro de entrada
 updateInput :: Element -> String -> UI ()
 updateInput input newText = do
     currentText <- get value input
@@ -53,7 +50,6 @@ handleButtonClick input action =
     else
         updateInput input action
 
--- Función para cambiar los botones disponibles y mostrar el resultado en una nueva línea
 updateButtonGrid :: [(String, String)] -> Element -> Element -> UI ()
 updateButtonGrid buttonActions grid input = do
     buttons <- mapM (createButton . fst) buttonActions
@@ -65,7 +61,7 @@ updateButtonGrid buttonActions grid input = do
                                  Right e -> safeEval e
             let resultado = either id show result
             currentText <- get value input
-            void $ element input # set value (currentText ++ "\n" ++ resultado)  -- Agrega el resultado en una nueva línea
+            void $ element input # set value (currentText ++ "\n" ++ resultado)
         else
             handleButtonClick input action) (zip buttons (map snd buttonActions))
 
@@ -79,7 +75,6 @@ setup window = do
     return window # set title "Calculadora"
     UI.addStyleSheet window "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
 
-    -- Fondo con degradado azul
     body <- getBody window
     void $ element body # set style [("height", "100vh"), ("display", "flex"),
                                      ("justify-content", "center"), ("align-items", "center"),
@@ -94,7 +89,6 @@ setup window = do
                                    ("display", "flex"), ("flex-direction", "column"),
                                    ("align-items", "center")]
 
-    -- Un solo cuadro de texto con dos renglones
     input <- UI.textarea # set (attr "placeholder") "Expresión"
                          # set style [("width", "100%"), ("height", "60px"),
                                       ("padding", "10px"), ("font-size", "20px"),
@@ -106,7 +100,6 @@ setup window = do
                                       ("gap", "5px"), ("justify-content", "center")]
 
     buttonsSwitch <- mapM createSwitchButton ["Decimal", "Binario", "Hexadecimal"]
-
     switchContainer <- UI.div # set style [("display", "flex"), ("justify-content", "center"),
                                            ("margin-bottom", "10px"), ("gap", "5px")]
     void $ element switchContainer #+ map element buttonsSwitch
@@ -117,36 +110,34 @@ setup window = do
     let switchSystem buttons allowedChars = do
             updateButtonGrid buttons buttonGrid input
             restrictInput input allowedChars
-            void $ element input # set value ""  -- Borra el cuadro de texto al cambiar de sistema
+            void $ element input # set value ""
 
-    on UI.click (head buttonsSwitch) $ \_ -> switchSystem buttonsDecimal Nothing
-    on UI.click (buttonsSwitch !! 1) $ \_ -> switchSystem buttonsBin (Just "01+-*/()C=")
-    on UI.click (last buttonsSwitch) $ \_ -> switchSystem buttonsHex (Just "0123456789ABCDEF+-*/()C=")
+    on UI.click (head buttonsSwitch) $ \_ -> switchSystem buttonsDecimal (Just "0123456789.,+-*/()^ex")
+    on UI.click (buttonsSwitch !! 1) $ \_ -> switchSystem buttonsBin (Just "01+-*/()")
+    on UI.click (last buttonsSwitch) $ \_ -> switchSystem buttonsHex (Just "0123456789ABCDEF+-*/()")
 
-    switchSystem buttonsDecimal Nothing
+    switchSystem buttonsDecimal (Just "0123456789.,+-*/()^ex")
 
--- **Lista de botones organizados por función**
 buttonsDecimal :: [(String, String)]
 buttonsDecimal =
     [("C", "C"), ("CE", "CE"), ("(", "("), (")", ")"), ("^", "^"), ("/", "/")
     ,("7", "7"), ("8", "8"), ("9", "9"), ("*", "*"), ("sqrt", "sqrt("), ("abs", "abs(")
     ,("4", "4"), ("5", "5"), ("6", "6"), ("-", "-"), ("sin", "sin("), ("cos", "cos(")
     ,("1", "1"), ("2", "2"), ("3", "3"), ("+", "+"), ("tan", "tan("), ("cot", "cot(")
-    ,("0", "0"), (".", "."), ("=", "="), ("∫", "integrate(,x)"), ("∂", "deriv(,x)"), ("acot", "acot(")
-    ,("asin", "asin("), ("acos", "acos("), ("atan", "atan("), ("sec", "sec("), ("csc", "csc("), ("log", "log("), ("bin","bin("), ("hex","hex(")]
+    ,("0", "0"), (",", ","), (".", "."), ("=", "="), ("∫", "integrate("), ("∂", "deriv(")
+    ,("ln", "ln("), ("log", "log("), ("e", "e"), ("x", "x")
+    ,("asin", "asin("), ("acos", "acos("), ("atan", "atan("), ("sec", "sec("), ("csc", "csc(")]
 
 buttonsBin :: [(String, String)]
 buttonsBin =
-    [("C", "C"), ("CE", "CE"), ("(", "("), (")", ")") ,("1", "1"), ("0", "0"),
-    ("AND", "AND"), ("OR", "OR"), ("XOR", "XOR"), ("NAND", "NAND"), ("+", "+"), ("-", "-")
+    [("C", "C"), ("CE", "CE"), ("(", "("), (")", ")"), ("1", "1"), ("0", "0")
+    ,("AND", "AND"), ("OR", "OR"), ("XOR", "XOR"), ("NAND", "NAND"), ("+", "+"), ("-", "-")
     ,("*", "*"), ("/", "/"), ("dec", "dec()"), ("hex", "hex("), ("=", "=")]
 
 buttonsHex :: [(String, String)]
 buttonsHex =
-    [("C", "C"), ("CE", "CE"), ("(", "("), (")", ")")
-    ,("A", "A"), ("B", "B"), ("C", "C"), ("D", "D")
-    ,("E", "E"), ("F", "F"), ("+", "+"), ("-","-")
-    ,("7", "7"), ("8", "8"), ("9", "9"), ("*", "*")
-    ,("4", "4"), ("5", "5"), ("6", "6"), ("/", "/")
-    ,("1", "1"), ("2", "2"), ("3", "3"), ("=","=")
-    ,("0", "0"), ("dec", "dec("), ("bin", "bin(")]
+    [("C", "C"), ("CE", "CE"), ("(", "("), (")", ")"), ("+", "+"), ("-", "-")
+    ,("A", "A"), ("B", "B"), ("C", "C"), ("D", "D"), ("E", "E"), ("F", "F")
+    ,("7", "7"), ("8", "8"), ("9", "9"), ("0", "0"), ("*", "*"), ("/", "/")
+    ,("4", "4"), ("5", "5"), ("6", "6"), ("bin", "bin("), ("dec", "dec("), ("=", "=")
+    ,("1", "1"), ("2", "2"), ("3", "3")]
