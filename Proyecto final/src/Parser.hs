@@ -28,6 +28,11 @@ data Expr = Val Double
           | ACot Expr
           | Deriv Expr String
           | Integrate Expr String
+          | BinToDec Expr  -- Convierte binario a decimal
+          | DecToBin Expr  -- Convierte decimal a binario
+          | BinXor Expr Expr -- XOR binario
+          | BinAnd Expr Expr -- AND binario
+          | BinOr Expr Expr  -- OR binario
           deriving Show
 
 -- Parser para números
@@ -102,9 +107,79 @@ integrateExpr = do
     char ')'
     return $ Integrate expr var
 
+-- Parser para operaciones binarias
+binToDecExpr :: Parser Expr
+binToDecExpr = do
+    string "bintodec"
+    spaces
+    expr <- parens <|> factor
+    return $ BinToDec expr
+
+
+decToBinExpr :: Parser Expr
+decToBinExpr = do
+    string "dectobin"
+    spaces
+    expr <- parens <|> factor
+    return $ DecToBin expr
+
+binXorExpr :: Parser Expr
+binXorExpr = do
+    string "xor"
+    spaces
+    char '('
+    expr1 <- parseExpr
+    char ','
+    spaces
+    expr2 <- parseExpr
+    char ')'
+    return $ BinXor expr1 expr2
+
+binAndExpr :: Parser Expr
+binAndExpr = do
+    string "and"
+    spaces
+    char '('
+    expr1 <- parseExpr
+    char ','
+    spaces
+    expr2 <- parseExpr
+    char ')'
+    return $ BinAnd expr1 expr2
+
+binOrExpr :: Parser Expr
+binOrExpr = do
+    string "or"
+    spaces
+    char '('
+    expr1 <- parseExpr
+    char ','
+    spaces
+    expr2 <- parseExpr
+    char ')'
+    return $ BinOr expr1 expr2
+
+
+
+
+
+
+
 -- Parser para factores (números, variables, paréntesis, raíz cuadrada, funciones trigonométricas, derivadas, integrales)
 factor :: Parser Expr
-factor = Parsec.try derivExpr <|> Parsec.try integrateExpr <|> Parsec.try trigFunc <|> Parsec.try sqrtExpr <|> Parsec.try number <|> Parsec.try variable <|> parens
+factor = Parsec.try binToDecExpr
+    <|> Parsec.try decToBinExpr
+    <|> Parsec.try binXorExpr
+    <|> Parsec.try binAndExpr
+    <|> Parsec.try binOrExpr
+    <|> Parsec.try derivExpr 
+    <|> Parsec.try integrateExpr    
+    <|> Parsec.try trigFunc 
+    <|> Parsec.try sqrtExpr 
+    <|> Parsec.try number 
+    <|> Parsec.try variable 
+    <|> parens
+    
 
 -- Parser para potencias
 power :: Parser Expr
@@ -125,3 +200,4 @@ subOp = do { char '-'; return Sub }
 mulOp = do { char '*' ; return Mul }
 divOp = do { char '/' ; return Div }
 powOp = do { char '^' ; return Pow }
+

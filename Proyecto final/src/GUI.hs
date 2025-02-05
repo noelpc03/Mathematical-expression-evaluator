@@ -72,11 +72,14 @@ setup window = do
         result <- liftIO $ case parse parseExpr "" expr of
                              Left err -> return $ Left ("Error de sintaxis: " ++ show err)
                              Right e  -> safeEval e
+                             
         let resultado = case result of
-                          Left errMsg -> "Error: " ++ errMsg
-                          Right val   -> "Resultado: " ++ show val
+                          Left errMsg -> errMsg
+                          Right (Left str) -> "Resultado: " ++ str  -- Si es un String (binario)
+                          Right (Right num) -> "Resultado: " ++ show num  -- Si es un número (Double)
+
         element output # set text resultado
         element errorMsg # set text (if "Error" `isInfixOf` resultado then resultado else "")
-    
+
     -- Agregar la hoja de estilos de Bootstrap
     UI.addStyleSheet window "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"

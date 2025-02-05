@@ -4,7 +4,7 @@ version:             0.1.0.0
 synopsis:            Evaluador de expresiones matemáticas con interfaz gráfica
 description:         Un proyecto para evaluar expresiones matemáticas y visualizarlas en una ventana gráfica usando Threepenny-GUI.
 license:             MIT
-license-file:        LICENSE
+-- license-file:        LICENSE
 author:              "Tu Nombre"
 maintainer:          "tu.email@ejemplo.com"
 copyright:           2025, Tu Nombre
@@ -17,7 +17,7 @@ executable Proyecto-final
   hs-source-dirs:      src
   other-modules:       Evaluator, Parser, GUI
   build-depends:       
-      base >=4.13 && <4.16,   
+      base >=4.13 && <4.18,   
       threepenny-gui >=0.9,   
       parsec >=3.1            
   default-language:    Haskell2010
