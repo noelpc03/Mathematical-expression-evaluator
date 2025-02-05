@@ -1,13 +1,14 @@
 module Evaluator (eval, evalBinary, safeEval, derivative, exprToString) where
 
 import Parser (Expr(..))
-import Numeric (showIntAtBase)
+import Numeric (showIntAtBase,readHex, showHex)
 import Data.Char (intToDigit)
 import Prelude hiding (tan, cos, sin, signum, log, exp)
 import qualified Prelude as P
 import qualified Control.Exception as Exception
 import Control.Exception (SomeException, evaluate)
 import Binary (binaryToDecimal, decimalToBinary, evalBinOp) -- Importamos Binary
+import Data.Bits (shiftL, shiftR, (.&.)) 
 
 -- Función para evaluar una expresión y simplificarla
 eval :: Expr -> Expr
@@ -631,7 +632,7 @@ integral _ _ = error "Integral no soportada para esta expresión"
 
 
 -- Evaluación segura que captura excepciones
-safeEval :: Expr -> IO (Either String (Either String Double))
+safeEval :: Expr -> IO (Either String Expr)
 safeEval expr = do
     case expr of
         DecToBin _ -> return $ Left (evalBinary expr)  -- Devuelve binario como String
@@ -642,8 +643,8 @@ safeEval expr = do
         _ -> do
             result <- Exception.try (evaluate (eval expr)) :: IO (Either SomeException Expr)
             return $ case result of
-            Left ex  -> Left ("Error al evaluar la expresión: " ++ show ex)
-            Right val -> Right val
+                Left ex -> Left ("Error al evaluar la expresión: " ++ show ex)
+                Right val -> Right val
 
 -- Función auxiliar para identificar base e
 isEBase :: Expr -> Bool
@@ -675,3 +676,45 @@ containsVar var (Abs u) = containsVar var u
 containsVar var (Deriv u _) = containsVar var u
 containsVar var (Integrate u _) = containsVar var u
 containsVar _ _ = False
+
+
+binToDecimal :: String -> Int 
+binToDecimal = foldl (\acc bit -> acc * 2 + if bit == '1' then 1 else 0) 0 
+
+decimalToBinary :: Int -> String 
+decimalToBinary 0 = "0" 
+decimalToBinary n = reverse (helper n) 
+    where 
+        helper 0 = "" 
+        helper x = intToDigit (x `mod` 2) : helper (x `div` 2) 
+        
+hexToBinary :: String -> String 
+hexToBinary hex = decimalToBinary (hexToDecimal hex) 
+
+binaryToHex :: String -> String 
+binaryToHex bin = decimalToHex (binToDecimal bin) 
+
+hexToDecimal :: String -> Int 
+hexToDecimal hexStr = 
+    case readHex hexStr of 
+        [(val, "")] -> val 
+        _           -> error "Formato hexadecimal inválido" 
+
+-- Convierte un entero a string hexadecimal 
+decimalToHex :: Int -> String 
+decimalToHex n = "0x" ++ showHex n "" 
+
+-- Evalúa una expresión hexadecimal 
+evalHex :: HexExpr -> String 
+evalHex (Val hex) = hex 
+evalHex (Add x y) = decimalToHex $ (hexToDecimal (evalHex x) + hexToDecimal (evalHex y) )
+evalHex (Sub x y) = decimalToHex $ (hexToDecimal (evalHex x) - hexToDecimal (evalHex y) )
+evalHex (Mul x y) = decimalToHex $ (hexToDecimal (evalHex x) * hexToDecimal (evalHex y) )
+evalHex (Div x y) = decimalToHex $ (hexToDecimal (evalHex x) `div` hexToDecimal (evalHex y) )
+evalHex (HexToDec x) = show $ hexToDecimal (evalHex x) 
+evalHex (DecToHex (Val x)) = decimalToHex (read x) 
+evalHex (BinToHex (Val bin)) = binaryToHex bin 
+evalHex (HexToBin (Val hex)) = hexToBinary hex 
+evalHex _ = "Operación no válida"
+
+

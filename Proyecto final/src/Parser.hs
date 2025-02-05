@@ -6,8 +6,9 @@ import qualified Control.Exception as Exception
 
 -- Otras importaciones
 import Text.Parsec.String (Parser)
-import Text.Parsec (char, string, spaces, many1, digit,optionMaybe, letter, choice, (<|>), chainl1)
+import Text.Parsec (char, string, spaces, many1, digit,optionMaybe, letter, choice, (<|>), chainl1,oneOf)
 import Control.Exception (SomeException, evaluate, try)
+import Text.Parsec.Char (digit)
 
 -- Definimos un tipo de datos para representar expresiones aritméticas
 data Expr = Val Double
@@ -26,14 +27,118 @@ data Expr = Val Double
           | ACos Expr
           | ATan Expr
           | ACot Expr
+          | Sec Expr
+          | Csc Expr
+          | Log Expr Expr
+          | Ln Expr
+          | Abs Expr
+          | Exp Expr
+          |Signum Expr
           | Deriv Expr String
+          | DerivEval Expr String Double
           | Integrate Expr String
           | BinToDec Expr  -- Convierte binario a decimal
           | DecToBin Expr  -- Convierte decimal a binario
           | BinXor Expr Expr -- XOR binario
           | BinAnd Expr Expr -- AND binario
           | BinOr Expr Expr  -- OR binario
+          | HexToDec Expr
+          | DecToHex Expr
+          | BinToHex Expr  
+          | HexToBin Expr 
           deriving Show
+---Parser para hexadecimal
+
+-- -- Parser para el operador AND
+-- andOp :: Parser (Expr -> Expr -> Expr)
+-- andOp = do
+--     string "and"
+--     spaces
+--     return And
+
+-- -- Parser para el operador OR
+-- orOp :: Parser (Expr -> Expr -> Expr)
+-- orOp = do
+--     string "or"
+--     spaces
+--     return Or
+
+-- -- Parser para el operador XOR
+-- xorOp :: Parser (Expr -> Expr -> Expr)
+-- xorOp = do
+--     string "xor"
+--     spaces
+--     return Xor
+
+-- -- Parser para el operador NAND
+-- nandOp :: Parser (Expr -> Expr -> Expr)
+-- nandOp = do
+--     string "nand"
+--     spaces
+--     return Nand
+
+
+-- Parser para binario a hexadecimal
+binToHexExpr :: Parser Expr
+binToHexExpr = do
+    string "bintohex"
+    spaces
+    expr <- many1 (oneOf "01")  -- Solo acepta 0 y 1
+    return $ BinToHex (Val expr)
+
+-- Parser para hexadecimal a binario
+hexToBinExpr :: Parser Expr
+hexToBinExpr = do
+    string "hextobin"
+    spaces
+    expr <- hexNumber
+    return $ HexToBin expr
+
+-- Parser para números hexadecimales (Ejemplo: 0x1A3F)
+hexNumber :: Parser Expr
+hexNumber = do
+    string "0x"  -- Prefijo hexadecimal
+    hex <- many1 (oneOf "0123456789ABCDEFabcdef")
+    return $ Val hex
+
+-- Parser para convertir hexadecimal a decimal
+hexToDecExpr :: Parser Expr
+hexToDecExpr = do
+    string "hextodec"
+    spaces
+    expr <- hexNumber
+    return $ HexToDec expr
+
+decimalNumber :: Parser Expr
+decimalNumber = do
+    digits <- many1 digit  -- Captura solo números decimales
+    return $ Val digits
+
+-- Parser para convertir decimal a hexadecimal
+decToHexExpr :: Parser Expr
+decToHexExpr = do
+    string "dectohex"
+    spaces
+    expr <- decimalNumber
+    return $ DecToHex expr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- Parser para números
 number :: Parser Expr
@@ -239,6 +344,11 @@ factor = Parsec.try signumFunc
     <|> Parsec.try binXorExpr
     <|> Parsec.try binAndExpr
     <|> Parsec.try binOrExpr
+    <|> Parsec.try binToHexExpr
+    <|> Parsec.try hexToBinExpr
+    <|> Parsec.try hexToDecExpr
+    <|> Parsec.try decToHexExpr
+    <|> Parsec.try hexNumber
     <|> parens
     
 
