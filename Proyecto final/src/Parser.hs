@@ -26,6 +26,13 @@ data Expr = Val Double
             | ACos Expr
             | ATan Expr
             | ACot Expr
+            | Sec Expr
+            | Csc Expr
+            | Exp Expr
+            | Log Expr Expr
+            | Ln Expr
+            | Abs Expr
+            | Signum Expr
             | Deriv Expr String
             | DerivEval Expr String Double
             | Integrate Expr String
@@ -56,7 +63,8 @@ trigFunc :: Parser Expr
 trigFunc = do
     func <- choice [Parsec.try (string "sin"), Parsec.try (string "cos"), Parsec.try (string "tan"),
                     Parsec.try (string "cot"), Parsec.try (string "asin"), Parsec.try (string "acos"),
-                    Parsec.try (string "atan"), Parsec.try (string "acot")]
+                    Parsec.try (string "atan"), Parsec.try (string "acot"), Parsec.try (string "sec"),
+                    Parsec.try (string "csc")]
     spaces
     expr <- parens <|> factor
     return $ case func of
@@ -68,6 +76,8 @@ trigFunc = do
         "acos" -> ACos expr
         "atan" -> ATan expr
         "acot" -> ACot expr
+        "sec"  -> Sec expr
+        "csc" -> Csc expr
 
 -- Parser para la raíz cuadrada
 sqrtExpr :: Parser Expr
@@ -76,6 +86,26 @@ sqrtExpr = do
     spaces
     expr <- parens <|> factor
     return $ Sqrt expr
+
+-- Parser para valor absoluto
+absFunc :: Parser Expr
+absFunc = do
+    string "abs"
+    spaces
+    char '('
+    expr <- parseExpr
+    char ')'
+    return $ Abs expr
+
+-- Parser para el signum
+signumFunc :: Parser Expr
+signumFunc = do
+    string "signum"
+    spaces
+    char '('
+    expr <- parseExpr
+    char ')'
+    return $ Signum expr
 
 -- Parser para derivadas
 derivExpr :: Parser Expr
@@ -98,6 +128,22 @@ derivExpr = do
         Nothing -> Deriv expr var
         Just point -> DerivEval expr var point
 
+-- Parser para funciones exponencial y logarítmica
+expFunc :: Parser Expr
+expFunc = do
+    string "exp"
+    spaces
+    expr <- parens <|> factor
+    return $ Exp expr
+
+lnFunc :: Parser Expr
+lnFunc = do
+    string "ln"
+    spaces
+    expr <- parens <|> factor
+    return $ Ln expr
+
+
 -- Parser para integrales
 integrateExpr :: Parser Expr
 integrateExpr = do
@@ -113,7 +159,8 @@ integrateExpr = do
 
 -- Parser para factores (números, variables, paréntesis, raíz cuadrada, funciones trigonométricas, derivadas, integrales)
 factor :: Parser Expr
-factor = Parsec.try derivExpr <|> Parsec.try integrateExpr <|> Parsec.try trigFunc <|> Parsec.try sqrtExpr <|> Parsec.try number <|> Parsec.try variable <|> parens
+factor = Parsec.try signumFunc <|>Parsec.try absFunc <|>Parsec.try derivExpr <|> Parsec.try integrateExpr <|> Parsec.try trigFunc <|> Parsec.try sqrtExpr <|> Parsec.try number <|> Parsec.try variable <|> Parsec.try expFunc 
+    <|> Parsec.try lnFunc <|> parens
 
 -- Parser para potencias
 power :: Parser Expr
