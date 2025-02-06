@@ -268,7 +268,6 @@ integrateExpr = do
     char '('
     expr <- parseExpr
     char ','
-    spaces
     var <- many1 letter
     char ')'
     return $ Integrate expr var

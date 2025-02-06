@@ -2,7 +2,7 @@ module GUI where
 
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
-import Evaluator (safeEval)
+import Evaluator (safeEval,exprToString)
 import Parser (parseExpr)
 import Text.Parsec (parse)
 import Control.Monad (void, when)
@@ -58,7 +58,11 @@ updateButtonGrid buttonActions grid input = do
             expr <- get value input
             result <- liftIO $ case parse parseExpr "" expr of
                                  Left _  -> return (Left "Error")
-                                 Right e -> safeEval e
+                                 Right e -> do
+                                        safeResult <- safeEval e
+                                        return $ case safeResult of
+                                                Left errMsg -> Left errMsg
+                                                Right expr  -> Right (exprToString expr)                      
             let resultado = either id show result
             currentText <- get value input
             void $ element input # set value (currentText ++ "\n" ++ resultado)
@@ -124,8 +128,8 @@ buttonsDecimal =
     ,("7", "7"), ("8", "8"), ("9", "9"), ("*", "*"), ("sqrt", "sqrt("), ("abs", "abs(")
     ,("4", "4"), ("5", "5"), ("6", "6"), ("-", "-"), ("sin", "sin("), ("cos", "cos(")
     ,("1", "1"), ("2", "2"), ("3", "3"), ("+", "+"), ("tan", "tan("), ("cot", "cot(")
-    ,("0", "0"), (",", ","), (".", "."), ("=", "="), ("∫", "integrate("), ("∂", "deriv(")
-    ,("ln", "ln("), ("log", "log("), ("e", "e"), ("x", "x")
+    ,("0", "0"), (",", ","), (".", "."), ("=", "="), ("∫", "integrate ("), ("∂", "deriv(")
+    ,("ln", "ln("), ("log", "log("), ("e", "e"), ("𝝅","PI"), ("x", "x")
     ,("asin", "asin("), ("acos", "acos("), ("atan", "atan("), ("sec", "sec("), ("csc", "csc("),("bin","dectobin "),("hex","dectohex ")]
 
 buttonsBin :: [(String, String)]

@@ -15,6 +15,7 @@ eval :: Expr -> Expr
 eval (Val n)     = Val n
 eval (Var v)
     | v == "e" = Val (P.exp 1)
+    | v == "PI" = Val P.pi
     | otherwise = Var v
 eval (Add x y)   = simplifyAdd (eval x) (eval y)
 eval (Sub x y)   = simplifySub (eval x) (eval y)
@@ -651,6 +652,7 @@ safeEval expr = do
             return $ case result of
                 Left ex -> Left ("Error al evaluar la expresión: " ++ show ex)
                 Right val -> Right val
+                    
 
 -- Función auxiliar para identificar base e
 isEBase :: Expr -> Bool
