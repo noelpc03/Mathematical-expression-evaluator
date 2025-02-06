@@ -7,7 +7,7 @@ import Prelude hiding (tan, cos, sin, signum, log, exp)
 import qualified Prelude as P
 import qualified Control.Exception as Exception
 import Control.Exception (SomeException, evaluate)
-import Binary (binaryToDecimal, decimalToBinary, evalBinOp) -- Importamos Binary
+import Binary (binaryToDecimal, decimalToBinary, evalBinOp) 
 import Data.Bits (shiftL, shiftR, (.&.)) 
 
 -- Función para evaluar una expresión y simplificarla
@@ -81,6 +81,7 @@ evalBinary (BinToDec (Val n)) = show (binaryToDecimal (show (round n)))
 evalBinary (BinXor (Val x) (Val y)) = reverse (evalBinOp "xor" (show (round x)) (show (round y)))
 evalBinary (BinAnd (Val x) (Val y)) = reverse (evalBinOp "and" (show (round x)) (show (round y)))
 evalBinary (BinOr  (Val x) (Val y)) = reverse (evalBinOp "or" (show (round x)) (show (round y)))
+evalBinary (BinNand (Val x) (Val y)) = reverse (evalBinOp "nand" (show (round x)) (show (round y)))
 evalBinary _ = "Operación no válida"
 
 
@@ -640,6 +641,11 @@ safeEval expr = do
         BinXor _ _ -> return $ Left (evalBinary expr)
         BinAnd _ _ -> return $ Left (evalBinary expr)
         BinOr _ _  -> return $ Left (evalBinary expr)
+        BinNand _ _ -> return $ Left (evalBinary expr)
+        DecToHex _ -> return $ Left (evalHex expr)
+        HexToBin _ -> return $ Left (evalHex expr)
+        HexToDec _ -> return $ Left (evalHex expr)
+        BinToHex _ -> return $ Left (evalHex expr)
         _ -> do
             result <- Exception.try (evaluate (eval expr)) :: IO (Either SomeException Expr)
             return $ case result of
@@ -678,18 +684,20 @@ containsVar var (Integrate u _) = containsVar var u
 containsVar _ _ = False
 
 
+
+
 binToDecimal :: String -> Int 
 binToDecimal = foldl (\acc bit -> acc * 2 + if bit == '1' then 1 else 0) 0 
 
-decimalToBinary :: Int -> String 
-decimalToBinary 0 = "0" 
-decimalToBinary n = reverse (helper n) 
+decimalToBinario :: Int -> String 
+decimalToBinario 0 = "0" 
+decimalToBinario n = reverse (helper n) 
     where 
         helper 0 = "" 
         helper x = intToDigit (x `mod` 2) : helper (x `div` 2) 
         
 hexToBinary :: String -> String 
-hexToBinary hex = decimalToBinary (hexToDecimal hex) 
+hexToBinary hex = decimalToBinario (hexToDecimal hex) 
 
 binaryToHex :: String -> String 
 binaryToHex bin = decimalToHex (binToDecimal bin) 
@@ -705,16 +713,16 @@ decimalToHex :: Int -> String
 decimalToHex n = "0x" ++ showHex n "" 
 
 -- Evalúa una expresión hexadecimal 
-evalHex :: HexExpr -> String 
-evalHex (Val hex) = hex 
+evalHex :: Expr -> String 
+evalHex (Var hex) = hex 
 evalHex (Add x y) = decimalToHex $ (hexToDecimal (evalHex x) + hexToDecimal (evalHex y) )
 evalHex (Sub x y) = decimalToHex $ (hexToDecimal (evalHex x) - hexToDecimal (evalHex y) )
 evalHex (Mul x y) = decimalToHex $ (hexToDecimal (evalHex x) * hexToDecimal (evalHex y) )
 evalHex (Div x y) = decimalToHex $ (hexToDecimal (evalHex x) `div` hexToDecimal (evalHex y) )
 evalHex (HexToDec x) = show $ hexToDecimal (evalHex x) 
-evalHex (DecToHex (Val x)) = decimalToHex (read x) 
-evalHex (BinToHex (Val bin)) = binaryToHex bin 
-evalHex (HexToBin (Val hex)) = hexToBinary hex 
+evalHex (DecToHex (Var x)) = decimalToHex (read x) 
+evalHex (BinToHex (Var bin)) = binaryToHex bin 
+evalHex (HexToBin (Var hex)) = hexToBinary hex 
 evalHex _ = "Operación no válida"
 
 

@@ -1,7 +1,7 @@
 module Binary (binaryToDecimal, decimalToBinary, evalBinOp) where
 
 import Debug.Trace (trace)
-import Data.Bits (xor, (.&.), (.|.))
+import Data.Bits (xor, (.&.), (.|.), complement)
 import Numeric (showIntAtBase)
 import Data.Char (intToDigit)
 
@@ -14,17 +14,6 @@ decimalToBinary :: Int -> String
 decimalToBinary 0 = "0"
 decimalToBinary n = reverse (showIntAtBase 2 intToDigit n "")
 
--- -- Evalúa operaciones binarias con depuración
--- evalBinOp :: String -> String -> String -> String
--- evalBinOp op x y =
---     trace ("Operación: " ++ op ++ " | x: " ++ x ++ " | y: " ++ y) $
---     case op of
---         "xor" -> decimalToBinary (binaryToDecimal x `xor` binaryToDecimal y)
---         "and" -> decimalToBinary (binaryToDecimal x .&. binaryToDecimal y)
---         "or"  -> decimalToBinary (binaryToDecimal x .|. binaryToDecimal y)
---         _     -> "Operación no válida"
-
-
 
 -- Convierte un número binario en una lista de bits
 stringToBits :: String -> [Int]
@@ -32,7 +21,7 @@ stringToBits = map (read . (:[]))
 
 -- Convierte una lista de bits a un número binario
 bitsToString :: [Int] -> String
-bitsToString = concatMap show
+bitsToString = map (\x -> if x==1 then '1' else '0')
 
 -- Añade ceros a la izquierda para igualar las longitudes de las cadenas binarias
 padWithZeros :: Int -> String -> String
@@ -50,9 +39,15 @@ andBitByBit x y = bitsToString $ zipWith (.&.) (stringToBits (reverse x)) (strin
 orBitByBit :: String -> String -> String
 orBitByBit x y = reverse (bitsToString $ zipWith (.|.) (stringToBits (reverse x)) (stringToBits (reverse y)))
 
+-- NAND bit a bit empezando desde el final (derecha a izquierda)
+nandBitByBit :: String -> String -> String
+nandBitByBit x y = bitsToString $ zipWith (\a b -> complement (a .&. b) .&. 1)(stringToBits (reverse x))(stringToBits (reverse y))
+
+
 -- Evaluar operaciones binarias bit a bit
 evalBinOp :: String -> String -> String -> String
 evalBinOp "xor" x y = xorBitByBit (padWithZeros (max (length x) (length y)) x) (padWithZeros (max (length x) (length y)) y)
 evalBinOp "and" x y = andBitByBit (padWithZeros (max (length x) (length y)) x) (padWithZeros (max (length x) (length y)) y)
 evalBinOp "or" x y  = reverse (orBitByBit (padWithZeros (max (length x) (length y)) x) (padWithZeros (max (length x) (length y)) y))
+evalBinOp "nand" x y = nandBitByBit (padWithZeros (max (length x) (length y)) x) (padWithZeros (max (length x) (length y)) y)
 evalBinOp _ _ _ = "Operación no válida"

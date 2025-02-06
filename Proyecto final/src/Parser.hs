@@ -42,6 +42,7 @@ data Expr = Val Double
           | BinXor Expr Expr -- XOR binario
           | BinAnd Expr Expr -- AND binario
           | BinOr Expr Expr  -- OR binario
+          | BinNand Expr Expr
           | HexToDec Expr
           | DecToHex Expr
           | BinToHex Expr  
@@ -84,7 +85,7 @@ binToHexExpr = do
     string "bintohex"
     spaces
     expr <- many1 (oneOf "01")  -- Solo acepta 0 y 1
-    return $ BinToHex (Val expr)
+    return $ BinToHex (Var expr)
 
 -- Parser para hexadecimal a binario
 hexToBinExpr :: Parser Expr
@@ -99,7 +100,7 @@ hexNumber :: Parser Expr
 hexNumber = do
     string "0x"  -- Prefijo hexadecimal
     hex <- many1 (oneOf "0123456789ABCDEFabcdef")
-    return $ Val hex
+    return $ Var hex
 
 -- Parser para convertir hexadecimal a decimal
 hexToDecExpr :: Parser Expr
@@ -112,7 +113,7 @@ hexToDecExpr = do
 decimalNumber :: Parser Expr
 decimalNumber = do
     digits <- many1 digit  -- Captura solo números decimales
-    return $ Val digits
+    return $ Var digits
 
 -- Parser para convertir decimal a hexadecimal
 decToHexExpr :: Parser Expr
@@ -295,7 +296,6 @@ binXorExpr = do
     char '('
     expr1 <- parseExpr
     char ','
-    spaces
     expr2 <- parseExpr
     char ')'
     return $ BinXor expr1 expr2
@@ -307,7 +307,6 @@ binAndExpr = do
     char '('
     expr1 <- parseExpr
     char ','
-    spaces
     expr2 <- parseExpr
     char ')'
     return $ BinAnd expr1 expr2
@@ -319,16 +318,38 @@ binOrExpr = do
     char '('
     expr1 <- parseExpr
     char ','
-    spaces
     expr2 <- parseExpr
     char ')'
     return $ BinOr expr1 expr2
 
+binNandExpr :: Parser Expr
+binNandExpr = do
+    string "nand"
+    spaces
+    char '('
+    expr1 <- parseExpr
+    char ','
+    expr2 <- parseExpr
+    char ')'
+    return $ BinNand expr1 expr2
 
 
 -- Parser para factores (números, variables, paréntesis, raíz cuadrada, funciones trigonométricas, derivadas, integrales)
 factor :: Parser Expr
-factor = Parsec.try signumFunc 
+factor = Parsec.try binToDecExpr
+    <|> Parsec.try decToBinExpr
+    <|> Parsec.try binXorExpr
+    <|> Parsec.try binAndExpr
+    <|> Parsec.try binOrExpr  
+    <|> Parsec.try binNandExpr
+
+    <|> Parsec.try binToHexExpr
+    <|> Parsec.try hexToBinExpr
+    <|> Parsec.try hexToDecExpr
+    <|> Parsec.try decToHexExpr
+    <|> Parsec.try hexNumber  
+
+    <|>Parsec.try signumFunc 
     <|>Parsec.try absFunc   
     <|>Parsec.try derivExpr 
     <|> Parsec.try integrateExpr 
@@ -339,16 +360,7 @@ factor = Parsec.try signumFunc
     <|> Parsec.try number 
     <|> Parsec.try variable 
     <|> Parsec.try expFunc 
-    <|>Parsec.try binToDecExpr
-    <|> Parsec.try decToBinExpr
-    <|> Parsec.try binXorExpr
-    <|> Parsec.try binAndExpr
-    <|> Parsec.try binOrExpr
-    <|> Parsec.try binToHexExpr
-    <|> Parsec.try hexToBinExpr
-    <|> Parsec.try hexToDecExpr
-    <|> Parsec.try decToHexExpr
-    <|> Parsec.try hexNumber
+
     <|> parens
     
 
