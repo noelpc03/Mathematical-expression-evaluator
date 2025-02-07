@@ -721,6 +721,10 @@ decimalToHex n = "0x" ++ showHex n ""
 -- Evalúa una expresión hexadecimal 
 evalHex :: Expr -> String 
 evalHex (Var hex) = hex 
+evalHex (Add x y) = decimalToHex $ (hexToDecimal (evalHex x) + hexToDecimal (evalHex y) )
+evalHex (Sub x y) = decimalToHex $ (hexToDecimal (evalHex x) - hexToDecimal (evalHex y) )
+-- evalHex (Mul x y) = decimalToHex $ (hexToDecimal (evalHex x) * hexToDecimal (evalHex y) )
+-- evalHex (Div x y) = decimalToHex $ (hexToDecimal (evalHex x) `div` hexToDecimal (evalHex y) )
 evalHex (HexToDec x) = show $ hexToDecimal (evalHex x) 
 evalHex (DecToHex (Var x)) = decimalToHex (read x) 
 evalHex (BinToHex (Var bin)) = binaryToHex bin 
